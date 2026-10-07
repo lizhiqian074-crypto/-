@@ -1,5 +1,6 @@
 extends Node
 ## Owns world time and coordination only. Each deer owns its own mind and FSM.
+@export_range(0,1) var social_seek_probability = 0.85
 @export var autosave_interval = 15.0
 @export var habitat_help_cooldown = 20.0
 var animals: Array[AnimalAgent] = []
@@ -44,7 +45,7 @@ func _physics_process(delta: float) -> void:
 			if distance < 3.0:
 				animal.mind.social_contact(other.animal_id, delta, distance < 0.6)
 	social_clock += delta
-	if social_clock >= 4.0:
+	if social_clock >= 1.5:
 		social_clock = 0
 		for animal in animals:
 			consider_company(animal)
@@ -57,7 +58,7 @@ func consider_company(animal: AnimalAgent) -> void:
 	if not animal.visible or animal.is_special() or animal.state in [AnimalAgent.State.FLEE,AnimalAgent.State.SOCIALIZE,AnimalAgent.State.ALERT] or animal.hunger > 65 or animal.energy < 30:
 		return
 	var sociability = float(animal.mind.personality.get("sociability",0.5))
-	if rng.randf() > sociability * 0.38 or animal.mind.fear > 55:
+	if rng.randf() > 0.3 + sociability * social_seek_probability or animal.mind.fear > 55:
 		return
 	var closest: AnimalAgent = null
 	var best_distance = 12.0

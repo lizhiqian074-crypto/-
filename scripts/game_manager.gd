@@ -3,7 +3,7 @@ signal progress_changed
 signal documentary_unlocked
 var current_animal = "tufted_deer"
 const EVENT_IDS = ["FIRST_MEETING", "FIRST_EXPLORATION", "NEW_COMPANION"]
-const TITLES = ["第一次见面", "初次探索", "新的伙伴"]
+const TITLES = ["第一次见面", "第一次探索", "新的朋友"]
 
 func completed(id: String) -> bool:
 	var index = EVENT_IDS.find(id)
@@ -16,15 +16,15 @@ func collected_count() -> int:
 			count += 1
 	return count
 
-func record_event(id: String) -> bool:
+func record_event(id: String, queue_postcard: bool = false) -> bool:
 	var index = EVENT_IDS.find(id)
 	if index < 0 or completed(id):
-		return false
-	if index > 0 and not completed(EVENT_IDS[index - 1]):
 		return false
 	var prefix = SaveManager.PREFIXES[index]
 	SaveManager.data[prefix + "_completed"] = true
 	SaveManager.data[prefix + "_postcard_unlocked"] = true
+	if queue_postcard and not SaveManager.data.pending_postcards.has(id):
+		SaveManager.data.pending_postcards.append(id)
 	var was_unlocked: bool = SaveManager.data.documentary_unlocked
 	SaveManager.data.documentary_unlocked = collected_count() == 3
 	SaveManager.save_data()

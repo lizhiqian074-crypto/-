@@ -44,7 +44,9 @@ func run() -> void:
 	var collection = game.get_node("CanvasLayer/PostcardCollection")
 	check(NavigationServer3D.map_get_iteration_id(deer.agent.get_navigation_map()) > 0, "navigation map synchronized")
 	check(deer.get_node("Visual").get_child_count() > 0, "missing model gives visible geometry")
-	check(not GameManager.record_event("NEW_COMPANION"), "out-of-order events are refused")
+	check(GameManager.record_event("NEW_COMPANION"), "friends can be recorded before other events")
+	SaveManager.data.new_companion_completed = false
+	SaveManager.data.new_companion_postcard_unlocked = false
 	# Approaching the deer as the observer must never trigger first meeting.
 	observer.position = Vector3(0, 2.8, 1)
 	deer.set_state(AnimalAgent.State.IDLE)
@@ -63,14 +65,11 @@ func run() -> void:
 	deer.alertness = 0
 	deer.curiosity = 100
 	# The previous test intentionally startled this deer; reset that fixture for story tests.
-	deer.mind.player_affinity = 60
+	deer.mind.player_affinity = 100
 	deer.mind.threat_until = 0
 	deer.mind.fear = 0
 	deer.set_state(AnimalAgent.State.IDLE)
-	events.first_meeting_min_time = 0.1
-	events.exploration_delay = 0.1
-	events.companion_delay = 0.1
-	events.decision_chance_per_second = 100.0
+	events.friend_play_min_seconds = 0.1
 	deer.move_speed = 4.0
 	game.get_node("CompanionDeer").move_speed = 4.0
 	events.event_triggered.connect(func(id): triggered.append(id))
@@ -87,8 +86,8 @@ func run() -> void:
 			check(viewer.image.stretch_mode == TextureRect.STRETCH_KEEP_ASPECT_CENTERED, "postcard preserves original aspect")
 			viewer.close()
 			check(not get_tree().paused, "continue resumes world")
-	check(triggered == ["FIRST_MEETING", "FIRST_EXPLORATION", "NEW_COMPANION"], "three real movement events in order")
-	check(game.get_node("CompanionDeer").visible, "companion appears in third chapter")
+	check(triggered.size() == 3 and triggered.has("FIRST_MEETING") and triggered.has("FIRST_EXPLORATION") and triggered.has("NEW_COMPANION"), "all three independent movement events occur")
+	check(events.play_distance >= 0.8, "friends actually move together before card")
 	check(GameManager.collected_count() == 3, "three postcards recorded")
 	check(SaveManager.data.documentary_unlocked, "documentary unlocks after all three cards")
 	check(not GameManager.record_event("FIRST_MEETING"), "event cannot unlock twice")

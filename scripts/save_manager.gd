@@ -15,7 +15,7 @@ func _ready() -> void:
 	load_save()
 
 func defaults() -> Dictionary:
-	var result = {"version": 2, "documentary_unlocked": false, "documentary_generated": false, "animals": {}, "world_seconds": 0.0, "habitat": {}}
+	var result = {"version": 3, "documentary_unlocked": false, "documentary_generated": false, "animals": {}, "world_seconds": 0.0, "habitat": {}, "visited_explore_areas": [], "pending_postcards": []}
 	for prefix in PREFIXES:
 		result[prefix + "_completed"] = false
 		result[prefix + "_postcard_unlocked"] = false
@@ -36,14 +36,20 @@ func load_save() -> void:
 		DirAccess.copy_absolute(save_path, save_path + ".damaged")
 		push_warning("存档损坏，已保留 .damaged 副本。")
 		return
-	# Only accept booleans, enforce ordered narrative and derive film unlock.
-	var previous = true
+	# Events are independent. Preserve friends/exploration even without a meeting.
+	var all_completed = true
 	for prefix in PREFIXES:
-		var completed = parsed.get(prefix + "_completed", false) == true and previous
+		var completed = parsed.get(prefix + "_completed", false) == true
 		data[prefix + "_completed"] = completed
 		data[prefix + "_postcard_unlocked"] = completed
-		previous = completed
-	data.documentary_unlocked = previous
+		all_completed = all_completed and completed
+	data.documentary_unlocked = all_completed
+	if parsed.get("visited_explore_areas") is Array:
+		for area in parsed.visited_explore_areas:
+			if area is String and not data.visited_explore_areas.has(area): data.visited_explore_areas.append(area)
+	if parsed.get("pending_postcards") is Array:
+		for id in parsed.pending_postcards:
+			if id in EVENTS and not data.pending_postcards.has(id): data.pending_postcards.append(id)
 	data.documentary_generated = parsed.get("documentary_generated", false) == true
 	if parsed.get("animals") is Dictionary:
 		data.animals = parsed.animals.duplicate(true)

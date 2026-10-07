@@ -35,6 +35,8 @@ func run() -> void:
 	check(main.mind.personality.curiosity == 0.8 and moss.mind.personality.courage == 0.2 and amber.mind.personality.sociability == 0.85, "distinct personalities from named profiles")
 	var start_positions: Array[Vector3] = []
 	for animal in [main,moss,amber,cloud]: start_positions.append(animal.position)
+	game.get_node("EventManager").set_physics_process(false)
+	for animal in herd.animals: animal.exploration_chance = 0
 	await frames(2400)
 	var changed = 0
 	for i in range(4):
@@ -77,6 +79,8 @@ func run() -> void:
 	main.state_remaining = 100
 	moss.state_remaining = 100
 	main.mind.fear = 0
+	main.mind.relations[moss.animal_id] = 35.0
+	moss.mind.relations[main.animal_id] = 35.0
 	var relation_a: float = main.mind.affinity_to(moss.animal_id)
 	var relation_b: float = moss.mind.affinity_to(main.animal_id)
 	await frames(120)
@@ -156,7 +160,7 @@ func run() -> void:
 	file.close()
 	SaveManager.load_save()
 	check(GameManager.completed("FIRST_MEETING") and not GameManager.completed("FIRST_EXPLORATION"), "v1 migration preserves actual postcard progress")
-	check(SaveManager.data.version == 2 and SaveManager.data.animals.is_empty() and not SaveManager.data.documentary_generated, "v1 migration initializes new fields safely")
+	check(SaveManager.data.version == 3 and SaveManager.data.animals.is_empty() and not SaveManager.data.documentary_generated, "v1 migration initializes new fields safely")
 	GameManager.reset_save()
 	print("RESULT: %d animal-memory/documentary checks, %d failures" % [count, failures])
 	get_tree().quit(0 if failures == 0 else 1)

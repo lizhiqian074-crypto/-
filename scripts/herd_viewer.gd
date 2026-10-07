@@ -44,7 +44,7 @@ func open() -> void:
 		var recollection = "仍在认识这片森林。"
 		if not animal.mind.memories.is_empty():
 			var latest: Dictionary = animal.mind.memories.back()
-			var phrases = {"startled":"记得你曾靠近或突然移动，暂时更谨慎。", "calm_observation":"记得你安静地陪伴过。", "habitat_help":"记得林下食源得到照料。", "friendly_contact":"记得与同伴安静相处。", "new_companion":"记得第一次认识新的伙伴。", "crowded":"记得同伴曾靠得过近。"}
+			var phrases = {"first_meeting":"记得主动靠近你的那一刻。", "first_exploration":"记得第一次走向远处的新区域。", "startled":"记得你曾靠近或突然移动，暂时更谨慎。", "calm_observation":"记得你安静地陪伴过。", "habitat_help":"记得林下食源得到照料。", "friendly_contact":"记得与同伴安静相处。", "new_companion":"记得和新的朋友一起玩耍。", "crowded":"记得同伴曾靠得过近。"}
 			recollection = phrases.get(latest.kind,"仍在认识这片森林。")
 		content.add_child(ArchiveUI.label(recollection,19,ArchiveUI.GOLD))
 	show()

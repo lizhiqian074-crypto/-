@@ -4,7 +4,7 @@ extends Node
 ## It is local simulation AI; no server or language-model calls exist.
 signal memory_added(kind: String)
 @export var memory_limit = 20
-@export var calm_affinity_gain = 0.38
+@export var calm_affinity_gain = 3.0
 @export var disturbance_cooldown = 12.0
 @export var fear_memory_days = 2.0
 var animal_id = ""
@@ -86,6 +86,10 @@ func observe(delta: float, observer_distance: float, observer_speed: float, ener
 		if calm_memory_clock >= 25.0:
 			calm_memory_clock = 0
 			remember("calm_observation")
+	# At complete trust, old fear no longer overrides the new relationship.
+	if player_affinity >= 100:
+		threat_until = 0
+		fear = 0
 	previous_observer_speed = observer_speed
 	fear = maxf(0, fear - delta * (0.5 if fear_memory_active() else 1.5))
 	if too_close or (fear_memory_active() and observer_distance < avoidance_radius()):
@@ -128,7 +132,7 @@ func affinity_to(other_id: String) -> float:
 func social_contact(other_id: String, delta: float, crowded: bool = false) -> void:
 	var value = affinity_to(other_id)
 	var social = float(personality.get("sociability", 0.5))
-	value += delta * (-0.3 if crowded else 0.4 + social * 0.7)
+	value += delta * (-0.3 if crowded else 4.0 + social * 3.0)
 	relations[other_id] = clampf(value, 0, 100)
 	if now() - float(last_social_memory.get(other_id, -1000)) > 30.0:
 		last_social_memory[other_id] = now()

@@ -12,7 +12,7 @@ func configure(events: Node) -> void:
 
 func on_event(id: String) -> void:
 	for data in postcards:
-		if data.postcard_id == id and not data.unlocked:
+		if data.postcard_id == id:
 			data.unlocked = true
 			postcard_available.emit(id)
 			return

@@ -4,8 +4,16 @@ Godot 4.x 离线生态观察游戏 Demo。玩家安静观察森林中各自生�
 
 ## 这次更新
 
+明信片按实际行为独立触发，不再有固定等待或前置顺序：
+
+- 任意一只鹿对玩家好感达到 **100** 后主动靠近，获得“第一次见面”。
+- 任意两只鹿对彼此的好感**都达到 100** 后一起玩耍，获得“新的朋友”。
+- 任意一只鹿实际走进距离其出生点至少 **8 米**的未访问探索区域，获得“第一次探索”。
+
+安静陪伴和同类接触的好感增长已加快。每种片段只收集一次；同时发生的片段会排队显示。旧存档保留已经获得的卡片，想从零演示可开启 Debug 后按 F4。原图片文件名保持兼容。
+
 - 新增 **开始页面 → 动物选择 → 森林观察** 流程。开始页有层叠森林剪影、柔和暖光、缓慢薄雾，读取你原来的游戏图标，不裁切、不改字。
-- 开场四只鹿：小栗（好奇、喜欢独处）、苔苔（胆小）、阿棕（亲近同伴）、云朵（勇敢、好奇）。第三个生命片段再遇到山竹。每只鹿有自己的状态机、导航代理和 AnimalMind。
+- 开场四只鹿：小栗（好奇、喜欢独处）、苔苔（胆小）、阿棕（亲近同伴）、云朵（勇敢、好奇）。山竹可通过 Debug F3 加入演示。每只鹿有自己的状态机、导航代理和 AnimalMind。
 - 记住玩家的安静陪伴、靠近或突然移动、栖地帮助，以及同类接触。对玩家和每个同类分别维护 0–100 好感，记忆会影响信任、警觉、提前避让和社交。自动保存，换场景和重启都保留。
 - “林间生命”可查看每只鹿的性格、情绪、对玩家态度和同伴关系。“照料栖地”改善林下食源；只有自主觅食并受益的鹿才记录帮助，不直接操控动物。
 - 按你的要求，**演示时随时能点击“生成生命纪录片”**。生成页如实展示目前已记录的片段，写入本地档案，再点击“观看纪录片”。三明信片主流程仍正常运行。
@@ -33,7 +41,7 @@ Godot 4.x 离线生态观察游戏 Demo。玩家安静观察森林中各自生�
 | 场景模型 | `assets/environment/forest.glb` |
 | 游戏标题.png | `assets/ui/游戏标题.png` |
 | 毛冠鹿 / 欧亚水獭 / 猪獾 / 松貂头像 | `assets/ui/animals/tufted_deer.png`、`otter.png`、`hog_badger.png`、`marten.png` |
-| 第一次见面 / 初次探索 / 新的伙伴 | `assets/postcards/first_meeting.png`、`first_exploration.png`、`new_companion.png` |
+| 第一次见面 / 第一次探索 / 新的朋友 | `assets/postcards/first_meeting.png`、`first_exploration.png`、`new_companion.png` |
 | 已接入纪录片 | `assets/video/tufted_deer_documentary.ogv` |
 
 其他路径、模型比例和方向可在 `data/assets.json` 修改。GLTF 外部贴图/BIN 必须保持相对目录关系，推荐 GLB。
@@ -42,9 +50,9 @@ Godot 4.x 离线生态观察游戏 Demo。玩家安静观察森林中各自生�
 
 WASD 缓慢移动，Q/E 升降，按住右键环顾，滚轮调速，ESC 暂停。明信片、林间生命和收藏打开时世界暂停。
 
-默认不会显示任务、相机拍摄玩法、日志或评分。三张明信片仍需由主角小栗真实完成主动见面、探索和伙伴接触。
+默认不会显示任务、相机拍摄玩法、日志或评分。三张明信片可由任意在场毛冠鹿完成主动见面、探索或双向满好感后的玩耍。
 
-Debug：选中 Game.tscn 的 Game，开启 Debug Mode，或 `godot --path . -- --debug-demo`。F1 准备见面、F2 探索、F3 伙伴、F4 清空全部存档与生成档案。F1 会显式清除小栗的惊吓记忆以便演示；正常游戏没有这个人格/关系修改按钮。
+Debug：选中 Game.tscn 的 Game，开启 Debug Mode，或 `godot --path . -- --debug-demo`。F1 准备见面、F2 探索、F3 准备双向满好感伙伴、F4 清空全部存档与生成档案。F1 会显式清除小栗的惊吓记忆以便演示；正常游戏没有这个人格/关系修改按钮。
 
 `data/assets.json` 的 `documentary_demo_access` 默认为 true，表示演示可随时生成。改为 false 则恢复“集齐三张才能生成”的正式流程。
 
@@ -52,12 +60,13 @@ Debug：选中 Game.tscn 的 Game，开启 Debug Mode，或 `godot --path . -- -
 
 [中文搭建说明](docs/搭建说明.md) · [新版说明与 AI 参数](docs/新版说明.md) · [验证报告](docs/验证报告.md)
 
-正常存档：`user://hidden_wildlife_save.json`；生成的个人档案：`user://hidden_wildlife_documentary.json`。旧版明信片进度自动迁移到版本 2；新动物记忆独立保存。游戏未使用网络请求。
+正常存档：`user://hidden_wildlife_save.json`；生成的个人档案：`user://hidden_wildlife_documentary.json`。旧版明信片进度自动迁移到版本 3；新动物记忆独立保存。游戏未使用网络请求。
 
 ```bash
 # Linux/macOS；测试使用独立存档，按顺序执行。
 HWA_TEST=1 godot --headless --path . --fixed-fps 60 --scene res://tests/Smoke.tscn
 HWA_TEST=1 godot --headless --path . --fixed-fps 60 --scene res://tests/AnimalMinds.tscn
+HWA_TEST=1 godot --headless --path . --fixed-fps 60 --scene res://tests/EventRules.tscn
 HWA_TEST=1 godot --headless --path . --fixed-fps 60 --scene res://tests/NaturalFlow.tscn
 HWA_TEST=1 godot --headless --path . --fixed-fps 60 --scene res://tests/Interactions.tscn
 # 带音轨的视频使用实际时间验证，不加 --fixed-fps：

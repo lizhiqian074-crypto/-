@@ -5,6 +5,7 @@ extends Node
 @export var eat_animation_name = "Eat"
 @export var rest_animation_name = "Rest"
 @export var alert_animation_name = "Alert"
+@export var play_animation_name = "Play"
 var player: AnimationPlayer
 
 func bind_model(model: Node3D) -> void:
@@ -24,7 +25,10 @@ func play_state(state: String) -> void:
 		desired = rest_animation_name
 	elif state == "ALERT":
 		desired = alert_animation_name
+	if state == "PLAY_TOGETHER":
+		desired = play_animation_name
 	var matched = find_animation(desired)
+	if matched.is_empty() and state == "PLAY_TOGETHER": matched = find_animation(walk_animation_name)
 	if matched.is_empty():
 		matched = find_animation(idle_animation_name)
 	if not matched.is_empty() and player.current_animation != matched:

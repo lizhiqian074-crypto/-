@@ -3,7 +3,7 @@ extends Node3D
 ## Autonomous weighted FSM. Special states are requests, not UI commands.
 signal intent_reached(state_name: String)
 signal state_changed(state_name: String)
-enum State { IDLE, WANDER, FORAGE, REST, ALERT, LOOK_AROUND, APPROACH_PLAYER, GO_TO_EXPLORE_AREA, APPROACH_COMPANION, FLEE, SOCIALIZE }
+enum State { IDLE, WANDER, FORAGE, REST, ALERT, LOOK_AROUND, APPROACH_PLAYER, GO_TO_EXPLORE_AREA, APPROACH_COMPANION, FLEE, SOCIALIZE, PLAY_TOGETHER }
 @export var animal_id = "xiaoli"
 @export var display_name = "小栗"
 @export_range(0.0,1.0) var personality_curiosity = 0.8
@@ -12,6 +12,8 @@ enum State { IDLE, WANDER, FORAGE, REST, ALERT, LOOK_AROUND, APPROACH_PLAYER, GO
 @export_range(0.0,1.0) var personality_vigilance = 0.7
 @export var move_speed = 1.1
 @export var home_radius = 6.0
+@export_range(0,1) var exploration_chance = 0.35
+@export var play_animation_name = "Play"
 @export var arrival_distance = 0.65
 @export var turn_speed = 2.5
 @export var is_companion = false
@@ -30,6 +32,8 @@ var curiosity = 15.0
 var state: State = State.IDLE
 var state_remaining = 4.0
 var home_position = Vector3.ZERO
+var origin_position = Vector3.ZERO
+var total_distance_walked = 0.0
 var target = Vector3.ZERO
 var observer: Node3D
 var animation_controller: AnimalAnimationController
@@ -45,6 +49,7 @@ var herd: Node
 func _ready() -> void:
 	rng.randomize()
 	home_position = position
+	origin_position = position
 	target = position
 	load_visual()
 	mind = AnimalMind.new()
@@ -67,7 +72,7 @@ func load_visual() -> void:
 		model.rotation.y = deg_to_rad(float(AssetCatalog.config.get("deer_yaw_degrees", 0.0)))
 	$Visual.add_child(model)
 	animation_controller = AnimalAnimationController.new()
-	for key in ["idle_animation_name", "walk_animation_name", "eat_animation_name", "rest_animation_name", "alert_animation_name"]:
+	for key in ["idle_animation_name", "walk_animation_name", "eat_animation_name", "rest_animation_name", "alert_animation_name", "play_animation_name"]:
 		animation_controller.set(key, get(key))
 	add_child(animation_controller)
 	animation_controller.bind_model(model)
@@ -97,7 +102,7 @@ func set_state(next: State, destination: Vector3 = Vector3.INF) -> void:
 	state_changed.emit(state_name())
 
 func is_special() -> bool:
-	return state in [State.APPROACH_PLAYER, State.GO_TO_EXPLORE_AREA, State.APPROACH_COMPANION]
+	return state in [State.APPROACH_PLAYER, State.GO_TO_EXPLORE_AREA, State.APPROACH_COMPANION, State.PLAY_TOGETHER]
 
 func request_intent(next: State, destination: Vector3) -> void:
 	set_state(next, destination)
@@ -124,7 +129,7 @@ func _physics_process(delta: float) -> void:
 		if away.length() < 0.1: away = Vector3(1,0,0)
 		set_state(State.FLEE, global_position + away.normalized() * 7.0)
 	if is_special():
-		if state == State.APPROACH_PLAYER and (alertness > 65 or distance_to_observer() < 3.0):
+		if state == State.APPROACH_PLAYER and (mind.player_affinity < 100 or distance_to_observer() < 3.0):
 			set_state(State.ALERT)
 			return
 		if not arrived:
@@ -141,6 +146,7 @@ func _physics_process(delta: float) -> void:
 		state_remaining -= delta
 		if state_remaining <= 0:
 			choose_behavior()
+	$Visual.position.y = maxf(0, sin(intent_elapsed * 6.0)) * 0.06 if state == State.PLAY_TOGETHER else 0.0
 	if is_instance_valid(fallback_visual):
 		# Subtle breathing only; locomotion still comes from the real FSM.
 		fallback_visual.position.y = sin(Time.get_ticks_msec() * 0.002) * 0.015
@@ -162,6 +168,12 @@ func update_needs(delta: float) -> void:
 			curiosity = clampf(curiosity + delta * curiosity_gain * (0.6 + personality_curiosity), 0, 100)
 
 func choose_behavior() -> void:
+	if is_instance_valid(herd) and rng.randf() < exploration_chance * (0.5 + personality_curiosity):
+		var events = herd.get_parent().get_node("EventManager")
+		var destination: Vector3 = events.exploration_target_for(self)
+		if destination.is_finite():
+			set_state(State.GO_TO_EXPLORE_AREA, destination)
+			return
 	var choices = [State.IDLE, State.WANDER, State.FORAGE, State.REST, State.ALERT, State.LOOK_AROUND]
 	var weights = [18.0, 18.0 + personality_courage * 26.0, 8.0 + hunger * 0.55, 5.0 + (100 - energy) * 0.6, maxf(0, alertness - 40) + mind.fear * personality_vigilance * 0.3, 12.0 + personality_curiosity * 22.0]
 	var total = 0.0
@@ -199,6 +211,7 @@ func move_towards_target(delta: float) -> void:
 	var travel = minf(move_speed * delta, direction.length())
 	global_position += direction.normalized() * travel
 	distance_walked_in_intent += travel
+	total_distance_walked += travel
 	var yaw = atan2(-direction.x, -direction.z)
 	$Visual.rotation.y = lerp_angle($Visual.rotation.y, yaw, minf(1, delta * turn_speed))
 
