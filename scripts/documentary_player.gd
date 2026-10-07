@@ -35,7 +35,7 @@ func _ready() -> void:
 	row.add_child(return_button)
 	row.add_child(ArchiveUI.button("返回档案库", func(): GameManager.go_to("Home")))
 	row.add_child(ArchiveUI.button("重新播放", replay))
-	if not SaveManager.data.documentary_unlocked:
+	if not SaveManager.data.documentary_generated:
 		status.text = "这段生命档案仍在整理中。"
 		return
 	var path = video_path if not video_path.is_empty() else AssetCatalog.path_for("documentary")
@@ -51,6 +51,6 @@ func finish() -> void:
 	status.text = "生命仍在继续。"
 
 func replay() -> void:
-	if player.stream != null and SaveManager.data.documentary_unlocked:
+	if player.stream != null and SaveManager.data.documentary_generated:
 		player.play()
 		status.text = "生命的片刻，正在展开。"

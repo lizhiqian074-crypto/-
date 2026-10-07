@@ -16,7 +16,7 @@ func play_state(state: String) -> void:
 	if not is_instance_valid(player):
 		return
 	var desired = idle_animation_name
-	if state in ["WANDER", "APPROACH_PLAYER", "GO_TO_EXPLORE_AREA", "APPROACH_COMPANION"]:
+	if state in ["WANDER", "APPROACH_PLAYER", "GO_TO_EXPLORE_AREA", "APPROACH_COMPANION", "FLEE", "SOCIALIZE"]:
 		desired = walk_animation_name
 	elif state == "FORAGE":
 		desired = eat_animation_name

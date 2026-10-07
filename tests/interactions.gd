@@ -32,7 +32,11 @@ func run() -> void:
 	get_tree().current_scene = null
 	GameManager.reset_save()
 	InputSetup.install()
-	GameManager.go_to("Home")
+	GameManager.go_to("Start")
+	await frames(4)
+	var start = get_tree().current_scene
+	check(start.name == "Start", "project opens on forest start page")
+	start.start_button.pressed.emit()
 	await frames(4)
 	var home = get_tree().current_scene
 	home.select_animal("otter")
@@ -109,6 +113,13 @@ func run() -> void:
 	check(not collection.visible and not get_tree().paused, "ESC closes collection and resumes")
 	GameManager.record_event("NEW_COMPANION")
 	hud.documentary_button.pressed.emit()
+	await frames(4)
+	var generator = get_tree().current_scene
+	check(generator.name == "DocumentaryGenerator", "HUD opens local documentary generator")
+	generator.generate_button.pressed.emit()
+	await frames(2)
+	check(not generator.view_button.disabled, "generate button enables supplied video")
+	generator.view_button.pressed.emit()
 	await frames(4)
 	var doc = get_tree().current_scene
 	check(doc.name == "DocumentaryPlayer", "watch button opens documentary scene")

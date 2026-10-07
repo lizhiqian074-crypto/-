@@ -3,7 +3,13 @@ extends Node3D
 ## Autonomous weighted FSM. Special states are requests, not UI commands.
 signal intent_reached(state_name: String)
 signal state_changed(state_name: String)
-enum State { IDLE, WANDER, FORAGE, REST, ALERT, LOOK_AROUND, APPROACH_PLAYER, GO_TO_EXPLORE_AREA, APPROACH_COMPANION }
+enum State { IDLE, WANDER, FORAGE, REST, ALERT, LOOK_AROUND, APPROACH_PLAYER, GO_TO_EXPLORE_AREA, APPROACH_COMPANION, FLEE, SOCIALIZE }
+@export var animal_id = "xiaoli"
+@export var display_name = "小栗"
+@export_range(0.0,1.0) var personality_curiosity = 0.8
+@export_range(0.0,1.0) var personality_courage = 0.4
+@export_range(0.0,1.0) var personality_sociability = 0.3
+@export_range(0.0,1.0) var personality_vigilance = 0.7
 @export var move_speed = 1.1
 @export var home_radius = 6.0
 @export var arrival_distance = 0.65
@@ -32,6 +38,8 @@ var intent_elapsed = 0.0
 var arrived = false
 var fallback_visual: Node3D
 var rng = RandomNumberGenerator.new()
+var mind: AnimalMind
+var herd: Node
 @onready var agent: NavigationAgent3D = $NavigationAgent3D
 
 func _ready() -> void:
@@ -39,6 +47,10 @@ func _ready() -> void:
 	home_position = position
 	target = position
 	load_visual()
+	mind = AnimalMind.new()
+	mind.name = "AnimalMind"
+	add_child(mind)
+	mind.configure(self, animal_id, display_name, {"curiosity": personality_curiosity, "courage": personality_courage, "sociability": personality_sociability, "vigilance": personality_vigilance})
 	set_state(State.IDLE)
 
 func load_visual() -> void:
@@ -47,6 +59,8 @@ func load_visual() -> void:
 		# Clearly marked primitive stand-in, never presented as the user's asset.
 		model = PlaceholderWorld.deer_marker()
 		fallback_visual = model
+		var label = model.get_child(model.get_child_count()-1) as Label3D
+		if label: label.text = display_name + " · 模型待导入"
 	else:
 		model.scale *= float(AssetCatalog.config.get("deer_scale", 1.0))
 		model.position = AssetCatalog.vector_setting("deer_offset")
@@ -102,6 +116,13 @@ func _physics_process(delta: float) -> void:
 		return
 	intent_elapsed += delta
 	update_needs(delta)
+	var observer_speed = float(observer.get("speed")) if is_instance_valid(observer) else 0.0
+	mind.observe(delta, distance_to_observer(), observer_speed, energy, hunger)
+	if is_instance_valid(observer) and distance_to_observer() < mind.avoidance_radius() and state != State.FLEE:
+		var away = global_position - observer.global_position
+		away.y = 0
+		if away.length() < 0.1: away = Vector3(1,0,0)
+		set_state(State.FLEE, global_position + away.normalized() * 7.0)
 	if is_special():
 		if state == State.APPROACH_PLAYER and (alertness > 65 or distance_to_observer() < 3.0):
 			set_state(State.ALERT)
@@ -111,10 +132,10 @@ func _physics_process(delta: float) -> void:
 		# No baked path / unreachable target: recover instead of locking AI forever.
 		if intent_elapsed > 45 and not arrived:
 			set_state(State.IDLE)
-	elif state == State.WANDER:
+	elif state in [State.WANDER, State.FLEE, State.SOCIALIZE]:
 		move_towards_target(delta)
 		state_remaining -= delta
-		if arrived or state_remaining < -12:
+		if (arrived and state != State.FLEE) or state_remaining < -12 or (state == State.FLEE and arrived and state_remaining <= 0):
 			choose_behavior()
 	else:
 		state_remaining -= delta
@@ -131,8 +152,6 @@ func update_needs(delta: float) -> void:
 		energy = clampf(energy + delta * 2.5, 0, 100)
 	if state == State.FORAGE:
 		hunger = clampf(hunger - delta * 3.0, 0, 100)
-	if is_companion:
-		return
 	var distance = distance_to_observer()
 	if distance < 3.0:
 		alertness = clampf(alertness + delta * 12, 0, 100)
@@ -140,11 +159,11 @@ func update_needs(delta: float) -> void:
 	else:
 		alertness = clampf(alertness - delta * 1.2, 0, 100)
 		if distance < 30 and is_instance_valid(observer) and observer.get("speed") < 0.6:
-			curiosity = clampf(curiosity + delta * curiosity_gain, 0, 100)
+			curiosity = clampf(curiosity + delta * curiosity_gain * (0.6 + personality_curiosity), 0, 100)
 
 func choose_behavior() -> void:
 	var choices = [State.IDLE, State.WANDER, State.FORAGE, State.REST, State.ALERT, State.LOOK_AROUND]
-	var weights = [18.0, 35.0, 8.0 + hunger * 0.55, 5.0 + (100 - energy) * 0.6, maxf(0, alertness - 40), 22.0]
+	var weights = [18.0, 18.0 + personality_courage * 26.0, 8.0 + hunger * 0.55, 5.0 + (100 - energy) * 0.6, maxf(0, alertness - 40) + mind.fear * personality_vigilance * 0.3, 12.0 + personality_curiosity * 22.0]
 	var total = 0.0
 	for weight in weights:
 		total += weight

@@ -57,7 +57,7 @@ func _physics_process(delta: float) -> void:
 	if not GameManager.completed("FIRST_MEETING"):
 		var wait = 5.0 if debug_mode else first_meeting_min_time
 		var curiosity_required = 25.0 if debug_mode else meeting_curiosity_threshold
-		if elapsed >= wait and quiet_observation >= wait * 0.7 and deer.alertness <= meeting_alertness_threshold and deer.curiosity >= curiosity_required:
+		if elapsed >= wait and quiet_observation >= wait * 0.7 and deer.alertness <= meeting_alertness_threshold and deer.curiosity >= curiosity_required and deer.mind.player_affinity >= 40 and not deer.mind.fear_memory_active():
 			prepare_meeting()
 	elif not GameManager.completed("FIRST_EXPLORATION"):
 		if phase_elapsed >= (5.0 if debug_mode else exploration_delay):
@@ -105,6 +105,10 @@ func update_contact(delta: float) -> void:
 	else:
 		contact_elapsed = 0
 	if contact_elapsed >= companion_contact_seconds:
+		deer.mind.relations[companion.animal_id] = maxf(65, deer.mind.affinity_to(companion.animal_id))
+		companion.mind.relations[deer.animal_id] = maxf(65, companion.mind.affinity_to(deer.animal_id))
+		deer.mind.remember("new_companion", companion.animal_id)
+		companion.mind.remember("new_companion", deer.animal_id)
 		deer.home_position = deer.global_position
 		companion.home_position = companion.global_position
 		deer.set_state(AnimalAgent.State.IDLE)
@@ -138,6 +142,8 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("debug_event_1"):
 		deer.alertness = 0
 		deer.curiosity = 100
+		deer.mind.player_affinity = maxf(50, deer.mind.player_affinity)
+		deer.mind.threat_until = 0
 		prepare_meeting()
 	elif event.is_action_pressed("debug_event_2"):
 		prepare_exploration()

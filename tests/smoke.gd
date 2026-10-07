@@ -62,6 +62,10 @@ func run() -> void:
 	deer.position = Vector3.ZERO
 	deer.alertness = 0
 	deer.curiosity = 100
+	# The previous test intentionally startled this deer; reset that fixture for story tests.
+	deer.mind.player_affinity = 60
+	deer.mind.threat_until = 0
+	deer.mind.fear = 0
 	deer.set_state(AnimalAgent.State.IDLE)
 	events.first_meeting_min_time = 0.1
 	events.exploration_delay = 0.1
@@ -104,7 +108,9 @@ func run() -> void:
 	add_child(game)
 	await frames(120)
 	check(not game.get_node("CanvasLayer/PostcardViewer").visible, "completed events do not reappear on re-entry")
+	check(DocumentaryArchive.generate(), "local life archive generation succeeds")
 	var doc = load("res://scenes/DocumentaryPlayer.tscn").instantiate()
+	doc.video_path = "res://tests/fixtures/missing.ogv"
 	add_child(doc)
 	check(doc.status.text.contains("资源未找到"), "missing video gives helpful message")
 	doc.finish()

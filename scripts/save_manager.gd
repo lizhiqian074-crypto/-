@@ -1,6 +1,8 @@
 extends Node
 ## Versioned local JSON. Writes are atomic, and no credentials/network are used.
 signal save_failed(message: String)
+signal collecting_save
+var reset_epoch = 0
 const EVENTS = ["FIRST_MEETING", "FIRST_EXPLORATION", "NEW_COMPANION"]
 const PREFIXES = ["first_meeting", "first_exploration", "new_companion"]
 var save_path = "user://hidden_wildlife_save.json"
@@ -13,7 +15,7 @@ func _ready() -> void:
 	load_save()
 
 func defaults() -> Dictionary:
-	var result = {"version": 1, "documentary_unlocked": false}
+	var result = {"version": 2, "documentary_unlocked": false, "documentary_generated": false, "animals": {}, "world_seconds": 0.0, "habitat": {}}
 	for prefix in PREFIXES:
 		result[prefix + "_completed"] = false
 		result[prefix + "_postcard_unlocked"] = false
@@ -42,8 +44,17 @@ func load_save() -> void:
 		data[prefix + "_postcard_unlocked"] = completed
 		previous = completed
 	data.documentary_unlocked = previous
+	data.documentary_generated = parsed.get("documentary_generated", false) == true
+	if parsed.get("animals") is Dictionary:
+		data.animals = parsed.animals.duplicate(true)
+	if parsed.get("habitat") is Dictionary:
+		data.habitat = parsed.habitat.duplicate(true)
+	var time = parsed.get("world_seconds",0)
+	if (time is float or time is int) and is_finite(float(time)):
+		data.world_seconds = maxf(0,float(time))
 
 func save_data() -> bool:
+	collecting_save.emit()
 	var file = FileAccess.open(save_path + ".tmp", FileAccess.WRITE)
 	if file == null:
 		save_failed.emit("存档写入失败，请检查用户目录权限。")
@@ -56,5 +67,6 @@ func save_data() -> bool:
 	return error == OK
 
 func reset_save() -> void:
+	reset_epoch += 1
 	data = defaults()
 	save_data()

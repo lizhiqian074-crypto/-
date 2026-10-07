@@ -33,6 +33,9 @@ func record_event(id: String) -> bool:
 		documentary_unlocked.emit()
 	return true
 
+func can_generate_documentary() -> bool:
+	return bool(AssetCatalog.config.get("documentary_demo_access", true)) or bool(SaveManager.data.documentary_unlocked)
+
 func go_to(scene_name: String) -> void:
 	get_tree().paused = false
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
@@ -40,4 +43,5 @@ func go_to(scene_name: String) -> void:
 
 func reset_save() -> void:
 	SaveManager.reset_save()
+	DocumentaryArchive.reset_archive()
 	progress_changed.emit()

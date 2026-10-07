@@ -16,6 +16,7 @@ EXTENSIONS = {'.glb', '.gltf', '.bin', '.fbx', '.obj', '.mtl', '.png', '.jpg', '
 MODEL = {'.glb', '.gltf', '.fbx', '.obj'}
 IMAGE = {'.png', '.jpg', '.jpeg', '.webp', '.tga', '.bmp'}
 RULES = {
+    "game_logo": (IMAGE, ["logo", "游戏标题", "游戏图标"]),
     'deer_model': (MODEL, ['tufted_deer', 'tufteddeer', '毛冠鹿', 'deer']),
     'forest_model': (MODEL, ['forest', '森林', '环境', 'environment']),
     'portraits.tufted_deer': (IMAGE, ['tufted_deer', '毛冠鹿']),

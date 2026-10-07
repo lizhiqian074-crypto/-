@@ -11,10 +11,14 @@ func _ready() -> void:
 	prepare_navigation()
 	var height = float(AssetCatalog.config.get("ground_height", 0.0))
 	if AssetCatalog.config.get("use_flat_navigation", true):
-		for key in ["MainDeer", "CompanionDeer", "HomeArea", "ExploreArea_A", "ExploreArea_B", "CompanionSpawn"]:
+		for key in ["MainDeer", "CompanionDeer", "MossDeer", "AmberDeer", "CloudDeer", "ForagePatch", "HomeArea", "ExploreArea_A", "ExploreArea_B", "CompanionSpawn"]:
 			get_node(key).position.y = height
 		$ObservationRig.position.y += height
 	events.debug_mode = events.debug_mode or debug_mode
+	$HerdManager.configure(self)
+	$CanvasLayer/HerdViewer.herd = $HerdManager
+	hud.herd = $HerdManager
+	hud.herd_viewer = $CanvasLayer/HerdViewer
 	events.configure(self)
 	$PostcardManager.configure(events)
 	$PostcardManager.postcard_available.connect(viewer.show_postcard)
@@ -42,6 +46,8 @@ func prepare_navigation() -> void:
 	var half_extent = float(AssetCatalog.config.get("navigation_half_extent", 18.0))
 	$MainDeer.fallback_half_extent = half_extent
 	$CompanionDeer.fallback_half_extent = half_extent
+	for node in [$MossDeer,$AmberDeer,$CloudDeer]:
+		node.fallback_half_extent = half_extent
 	var region: NavigationRegion3D = $NavigationRegion3D
 	if not AssetCatalog.config.get("use_flat_navigation", true):
 		return # Keep a hand-baked NavigationMesh; no mesh means bounded fallback.

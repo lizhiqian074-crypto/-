@@ -31,5 +31,8 @@
   ],
   "navigation_half_extent": 18.0,
   "ground_height": 0.0,
-  "use_flat_navigation": true
+  "use_flat_navigation": true,
+  "game_logo": "res://assets/ui/游戏标题.png",
+  "documentary_poster": "res://assets/ui/documentary_poster.png",
+  "documentary_demo_access": true
 }

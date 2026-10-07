@@ -7,6 +7,8 @@ var notice: Label
 var animal: AnimalAgent
 var events: Node
 var pause_panel: Control
+var herd: Node
+var herd_viewer: Control
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -26,6 +28,7 @@ func _ready() -> void:
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	top.add_child(title)
 	postcard_button = ArchiveUI.button("", func(): collection_requested.emit())
+	top.add_child(ArchiveUI.button("林间生命",func(): herd_viewer.open()))
 	top.add_child(postcard_button)
 	debug_label = ArchiveUI.label("", 18, ArchiveUI.GOLD)
 	column.add_child(debug_label)
@@ -38,10 +41,11 @@ func _ready() -> void:
 	var bottom = HBoxContainer.new()
 	bottom.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	column.add_child(bottom)
-	var hint = ArchiveUI.label("WASD 缓慢移动   ·   Q/E 升降   ·   右键环顾   ·   滚轮调速   ·   ESC 暂停", 18, ArchiveUI.PAPER)
+	var hint = ArchiveUI.label("WASD / Q E 移动   ·   右键环顾   ·   ESC 暂停", 18, ArchiveUI.PAPER)
 	hint.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	bottom.add_child(hint)
-	documentary_button = ArchiveUI.button("", func(): GameManager.go_to("DocumentaryPlayer"))
+	documentary_button = ArchiveUI.button("", func(): GameManager.go_to("DocumentaryGenerator"))
+	bottom.add_child(ArchiveUI.button("照料栖地",help_habitat))
 	bottom.add_child(documentary_button)
 	bottom.add_child(ArchiveUI.button("返回档案库", func(): GameManager.go_to("Home")))
 	GameManager.progress_changed.connect(refresh)
@@ -52,14 +56,20 @@ func _ready() -> void:
 
 func refresh() -> void:
 	postcard_button.text = "生命明信片  %d/3" % GameManager.collected_count()
-	documentary_button.disabled = not SaveManager.data.documentary_unlocked
-	documentary_button.text = "观看生命纪录片" if SaveManager.data.documentary_unlocked else "纪录片整理中"
+	documentary_button.disabled = not GameManager.can_generate_documentary()
+	documentary_button.text = "查看生命纪录片" if SaveManager.data.documentary_generated else "生成生命纪录片"
 
 func _process(_delta: float) -> void:
 	debug_label.visible = is_instance_valid(events) and events.debug_mode
 	if debug_label.visible and is_instance_valid(animal):
 		debug_label.text = "DEBUG  %s  |  饥饿 %.0f  能量 %.0f  警觉 %.0f  好奇 %.0f
 F1 见面准备 · F2 探索 · F3 伙伴 · F4 清空存档" % [animal.state_name(), animal.hunger, animal.energy, animal.alertness, animal.curiosity]
+
+func help_habitat() -> void:
+	if is_instance_valid(herd) and herd.help_habitat():
+		notice.text = "林下食源得到了照料，生命会作出自己的选择。"
+	else:
+		notice.text = "让这片栖地休息片刻。"
 
 func build_pause() -> void:
 	pause_panel = Control.new()

@@ -8,6 +8,7 @@ config/features=PackedStringArray("4.3", "GL Compatibility")
 SaveManager="*res://scripts/save_manager.gd"
 GameManager="*res://scripts/game_manager.gd"
 AssetCatalog="*res://scripts/asset_catalog.gd"
+DocumentaryArchive="*res://scripts/documentary_archive.gd"
 [display]
 window/size/viewport_width=1920
 window/size/viewport_height=1080

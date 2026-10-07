@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=3]
+[gd_scene load_steps=16 format=3]
 [ext_resource type="Script" path="res://scripts/game.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/animal_agent.gd" id="2"]
 [ext_resource type="Script" path="res://scripts/companion_deer.gd" id="3"]
@@ -8,6 +8,8 @@
 [ext_resource type="Script" path="res://scripts/game_hud.gd" id="7"]
 [ext_resource type="PackedScene" path="res://scenes/PostcardViewer.tscn" id="8"]
 [ext_resource type="PackedScene" path="res://scenes/PostcardCollection.tscn" id="9"]
+[ext_resource type="Script" path="res://scripts/herd_manager.gd" id="10"]
+[ext_resource type="Script" path="res://scripts/herd_viewer.gd" id="11"]
 [sub_resource type="ProceduralSkyMaterial" id="SkyMat"]
 sky_top_color = Color(0.12, 0.24, 0.2, 1)
 sky_horizon_color = Color(0.58, 0.63, 0.48, 1)
@@ -58,11 +60,63 @@ avoidance_enabled = false
 visible = false
 position = Vector3(13, 0, -13)
 script = ExtResource("3")
+animal_id = "companion"
+display_name = "山竹"
+personality_curiosity = 0.55
+personality_courage = 0.6
+personality_sociability = 0.8
+personality_vigilance = 0.35
 [node name="Visual" type="Node3D" parent="CompanionDeer"]
 [node name="NavigationAgent3D" type="NavigationAgent3D" parent="CompanionDeer"]
 path_desired_distance = 0.3
 target_desired_distance = 0.5
 radius = 0.4
+[node name="MossDeer" type="Node3D" parent="."]
+position = Vector3(-6, 0, -3)
+script = ExtResource("2")
+animal_id = "moss"
+display_name = "苔苔"
+personality_curiosity = 0.45
+personality_courage = 0.2
+personality_sociability = 0.25
+personality_vigilance = 0.85
+[node name="Visual" type="Node3D" parent="MossDeer"]
+[node name="NavigationAgent3D" type="NavigationAgent3D" parent="MossDeer"]
+path_desired_distance = 0.3
+target_desired_distance = 0.5
+radius = 0.4
+[node name="AmberDeer" type="Node3D" parent="."]
+position = Vector3(6, 0, 1)
+script = ExtResource("2")
+animal_id = "amber"
+display_name = "阿棕"
+personality_curiosity = 0.5
+personality_courage = 0.6
+personality_sociability = 0.85
+personality_vigilance = 0.35
+[node name="Visual" type="Node3D" parent="AmberDeer"]
+[node name="NavigationAgent3D" type="NavigationAgent3D" parent="AmberDeer"]
+path_desired_distance = 0.3
+target_desired_distance = 0.5
+radius = 0.4
+[node name="CloudDeer" type="Node3D" parent="."]
+position = Vector3(5, 0, -7)
+script = ExtResource("2")
+animal_id = "cloud"
+display_name = "云朵"
+personality_curiosity = 0.85
+personality_courage = 0.8
+personality_sociability = 0.65
+personality_vigilance = 0.25
+[node name="Visual" type="Node3D" parent="CloudDeer"]
+[node name="NavigationAgent3D" type="NavigationAgent3D" parent="CloudDeer"]
+path_desired_distance = 0.3
+target_desired_distance = 0.5
+radius = 0.4
+[node name="ForagePatch" type="Marker3D" parent="."]
+position = Vector3(4,0,-2)
+[node name="HerdManager" type="Node" parent="."]
+script = ExtResource("10")
 [node name="ObservationRig" type="Node3D" parent="."]
 position = Vector3(0, 2.8, 13)
 script = ExtResource("4")
@@ -77,5 +131,7 @@ script = ExtResource("6")
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
 [node name="GameHUD" type="Control" parent="CanvasLayer"]
 script = ExtResource("7")
+[node name="HerdViewer" type="Control" parent="CanvasLayer"]
+script = ExtResource("11")
 [node name="PostcardCollection" parent="CanvasLayer" instance=ExtResource("9")]
 [node name="PostcardViewer" parent="CanvasLayer" instance=ExtResource("8")]
