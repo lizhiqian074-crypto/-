@@ -4,6 +4,10 @@ Godot 4.x 离线生态观察游戏 Demo。玩家安静观察森林中各自生�
 
 ## 这次更新
 
+**地形碰撞已接入：** 玩家和毛冠鹿使用物理身体移动；森林 GLB 自动生成静态碰撞，原有碰撞沿用。鹿受重力影响并贴合可行走斜坡；玩家 WASD / Q/E 移动都受碰撞限制。真实森林会自动烘焙导航，缺导航时也会被障碍挡住，不再直接穿过地形。
+
+本次仅更新时：关闭 Godot，复制新版 `scripts` 文件夹和 `scenes/Game.tscn` 到原项目，同名替换。保留原 `assets` 里的模型、图片和视频。已有 `data/assets.json` 无需替换，自动碰撞和导航默认生效。
+
 明信片按实际行为独立触发，不再有固定等待或前置顺序：
 
 - 任意一只鹿对玩家好感达到 **100** 后主动靠近，获得“第一次见面”。
@@ -67,6 +71,7 @@ Debug：选中 Game.tscn 的 Game，开启 Debug Mode，或 `godot --path . -- -
 HWA_TEST=1 godot --headless --path . --fixed-fps 60 --scene res://tests/Smoke.tscn
 HWA_TEST=1 godot --headless --path . --fixed-fps 60 --scene res://tests/AnimalMinds.tscn
 HWA_TEST=1 godot --headless --path . --fixed-fps 60 --scene res://tests/EventRules.tscn
+HWA_TEST=1 godot --headless --path . --fixed-fps 60 --scene res://tests/CollisionWorld.tscn
 HWA_TEST=1 godot --headless --path . --fixed-fps 60 --scene res://tests/NaturalFlow.tscn
 HWA_TEST=1 godot --headless --path . --fixed-fps 60 --scene res://tests/Interactions.tscn
 # 带音轨的视频使用实际时间验证，不加 --fixed-fps：

@@ -1,4 +1,4 @@
-extends Node3D
+extends CharacterBody3D
 @export var slow_observation_mode = true
 @export var move_speed = 3.0
 @export var max_slow_speed = 4.0
@@ -10,6 +10,17 @@ var speed = 0.0
 @onready var camera: Camera3D = $Camera3D
 
 func _ready() -> void:
+	collision_layer = 4
+	collision_mask = 7
+	motion_mode = CharacterBody3D.MOTION_MODE_FLOATING
+	var shape = CollisionShape3D.new()
+	shape.name = "PlayerCollision"
+	var capsule = CapsuleShape3D.new()
+	capsule.radius = 0.35
+	capsule.height = 1.7
+	shape.shape = capsule
+	shape.position.y = -0.65
+	add_child(shape)
 	InputSetup.install()
 	camera.rotation.x = pitch
 
@@ -36,9 +47,11 @@ func _physics_process(delta: float) -> void:
 	if slow_observation_mode:
 		actual_speed = minf(actual_speed, max_slow_speed)
 	var motion = direction.limit_length() * actual_speed * delta
-	position += motion
-	position.x = clampf(position.x, -bounds_half_extent, bounds_half_extent)
-	position.z = clampf(position.z, -bounds_half_extent, bounds_half_extent)
-	var floor_height = float(AssetCatalog.config.get("ground_height", 0.0))
-	position.y = clampf(position.y, floor_height + 1.2, floor_height + 12.0)
-	speed = motion.length() / maxf(delta, 0.0001)
+	var destination = global_position + motion
+	destination.x = clampf(destination.x,-bounds_half_extent,bounds_half_extent)
+	destination.z = clampf(destination.z,-bounds_half_extent,bounds_half_extent)
+	destination.y = minf(destination.y,float(AssetCatalog.config.get("ground_height",0)) + 12.0)
+	velocity = (destination-global_position) / maxf(delta,0.0001)
+	var before = global_position
+	move_and_slide()
+	speed = global_position.distance_to(before) / maxf(delta,0.0001)

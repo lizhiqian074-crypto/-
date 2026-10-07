@@ -1,0 +1,17 @@
+[gd_scene load_steps=4 format=3]
+[sub_resource type="PlaneMesh" id="Ground"]
+size = Vector2(48,48)
+[sub_resource type="BoxMesh" id="Wall"]
+size = Vector3(10,4,0.5)
+[sub_resource type="BoxMesh" id="Ramp"]
+size = Vector3(4,0.3,10)
+[node name="CollisionForest" type="Node3D"]
+[node name="Ground" type="MeshInstance3D" parent="."]
+mesh = SubResource("Ground")
+[node name="Wall" type="MeshInstance3D" parent="."]
+position = Vector3(0,2,-4)
+mesh = SubResource("Wall")
+[node name="Ramp" type="MeshInstance3D" parent="."]
+position = Vector3(9,1.3,4)
+rotation_degrees = Vector3(15,0,0)
+mesh = SubResource("Ramp")

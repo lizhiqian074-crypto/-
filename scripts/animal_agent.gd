@@ -1,5 +1,5 @@
 class_name AnimalAgent
-extends Node3D
+extends CharacterBody3D
 ## Autonomous weighted FSM. Special states are requests, not UI commands.
 signal intent_reached(state_name: String)
 signal state_changed(state_name: String)
@@ -11,6 +11,9 @@ enum State { IDLE, WANDER, FORAGE, REST, ALERT, LOOK_AROUND, APPROACH_PLAYER, GO
 @export_range(0.0,1.0) var personality_sociability = 0.3
 @export_range(0.0,1.0) var personality_vigilance = 0.7
 @export var move_speed = 1.1
+@export var gravity = 20.0
+@export var body_radius = 0.35
+@export var body_height = 1.8
 @export var home_radius = 6.0
 @export_range(0,1) var exploration_chance = 0.35
 @export var play_animation_name = "Play"
@@ -47,6 +50,7 @@ var herd: Node
 @onready var agent: NavigationAgent3D = $NavigationAgent3D
 
 func _ready() -> void:
+	configure_body()
 	rng.randomize()
 	home_position = position
 	origin_position = position
@@ -57,6 +61,25 @@ func _ready() -> void:
 	add_child(mind)
 	mind.configure(self, animal_id, display_name, {"curiosity": personality_curiosity, "courage": personality_courage, "sociability": personality_sociability, "vigilance": personality_vigilance})
 	set_state(State.IDLE)
+
+func configure_body() -> void:
+	collision_layer = 2
+	collision_mask = 7
+	floor_snap_length = 0.5
+	floor_max_angle = deg_to_rad(45)
+	# Recast paths sit slightly above collider surfaces; allow advancing past ground waypoints.
+	agent.path_desired_distance = 0.6
+	agent.target_desired_distance = arrival_distance
+	var shape = CollisionShape3D.new()
+	shape.name = "BodyCollision"
+	var capsule = CapsuleShape3D.new()
+	capsule.radius = body_radius
+	capsule.height = maxf(body_height,body_radius*2)
+	shape.shape = capsule
+	shape.position.y = capsule.height / 2
+	shape.disabled = not visible
+	add_child(shape)
+	visibility_changed.connect(func(): shape.set_deferred("disabled",not visible))
 
 func load_visual() -> void:
 	var model = AssetCatalog.model("deer_model")
@@ -119,6 +142,8 @@ func distance_to_observer() -> float:
 func _physics_process(delta: float) -> void:
 	if not visible:
 		return
+	velocity.x = 0
+	velocity.z = 0
 	intent_elapsed += delta
 	update_needs(delta)
 	var observer_speed = float(observer.get("speed")) if is_instance_valid(observer) else 0.0
@@ -146,6 +171,14 @@ func _physics_process(delta: float) -> void:
 		state_remaining -= delta
 		if state_remaining <= 0:
 			choose_behavior()
+	var before_motion = global_position
+	if is_on_floor(): velocity.y = -0.5
+	else: velocity.y -= gravity * delta
+	move_and_slide()
+	# Count achieved horizontal travel, never requested movement into a wall or gravity.
+	var walked = Vector2(global_position.x,global_position.z).distance_to(Vector2(before_motion.x,before_motion.z))
+	distance_walked_in_intent += walked
+	total_distance_walked += walked
 	$Visual.position.y = maxf(0, sin(intent_elapsed * 6.0)) * 0.06 if state == State.PLAY_TOGETHER else 0.0
 	if is_instance_valid(fallback_visual):
 		# Subtle breathing only; locomotion still comes from the real FSM.
@@ -187,8 +220,8 @@ func choose_behavior() -> void:
 			return
 
 func move_towards_target(delta: float) -> void:
-	var remaining = global_position.distance_to(target)
-	if remaining <= arrival_distance:
+	var remaining = Vector2(global_position.x,global_position.z).distance_to(Vector2(target.x,target.z))
+	if remaining <= arrival_distance and absf(global_position.y-target.y) <= 1.0:
 		arrived = true
 		if is_special():
 			intent_reached.emit(state_name())
@@ -203,15 +236,12 @@ func move_towards_target(delta: float) -> void:
 			set_state(State.IDLE)
 			return
 	var direction = next_position - global_position
-	# Baked terrain can contain slopes; only non-nav fallback is planar.
-	if not navigation_available(map):
-		direction.y = 0
+	# The path chooses horizontal direction; gravity and floor snapping follow terrain.
+	direction.y = 0
 	if direction.length_squared() < 0.0001:
 		return
-	var travel = minf(move_speed * delta, direction.length())
-	global_position += direction.normalized() * travel
-	distance_walked_in_intent += travel
-	total_distance_walked += travel
+	velocity.x = direction.normalized().x * minf(move_speed,direction.length()/delta)
+	velocity.z = direction.normalized().z * minf(move_speed,direction.length()/delta)
 	var yaw = atan2(-direction.x, -direction.z)
 	$Visual.rotation.y = lerp_angle($Visual.rotation.y, yaw, minf(1, delta * turn_speed))
 
