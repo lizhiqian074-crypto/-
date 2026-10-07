@@ -1,0 +1,1 @@
+请按 README 和 data/assets.json 导入现有资产。缺失资产不会使程序崩溃。

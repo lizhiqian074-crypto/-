@@ -1,0 +1,35 @@
+{
+  "deer_model": "res://assets/models/tufted_deer.glb",
+  "forest_model": "res://assets/environment/forest.glb",
+  "portraits": {
+    "tufted_deer": "res://assets/ui/animals/tufted_deer.png",
+    "otter": "res://assets/ui/animals/otter.png",
+    "hog_badger": "res://assets/ui/animals/hog_badger.png",
+    "marten": "res://assets/ui/animals/marten.png"
+  },
+  "postcards": {
+    "FIRST_MEETING": "res://assets/postcards/first_meeting.png",
+    "FIRST_EXPLORATION": "res://assets/postcards/first_exploration.png",
+    "NEW_COMPANION": "res://assets/postcards/new_companion.png"
+  },
+  "documentary": "res://assets/video/tufted_deer_documentary.ogv",
+  "forest_ambience": "res://assets/audio/forest_ambience.ogg",
+  "ui_hover": "res://assets/audio/ui_hover.ogg",
+  "postcard_open": "res://assets/audio/postcard_open.ogg",
+  "deer_scale": 1.0,
+  "deer_yaw_degrees": 0.0,
+  "deer_offset": [
+    0,
+    0,
+    0
+  ],
+  "forest_scale": 1.0,
+  "forest_offset": [
+    0,
+    0,
+    0
+  ],
+  "navigation_half_extent": 18.0,
+  "ground_height": 0.0,
+  "use_flat_navigation": true
+}
